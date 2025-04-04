@@ -6,20 +6,12 @@ This Discord bot monitors a specific channel for a Finnish word game where playe
 
 The bot is built using a multi-actor model with the following components:
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│  Discord Bot    │────▶│ Word Validator  │────▶│  Game State     │
-│                 │     │                 │     │                 │
-└─────────────────┘     └────────┬────────┘     └─────────────────┘
-                                 │
-                     ┌───────────┴───────────┐
-                     │                       │
-           ┌─────────▼─────────┐   ┌─────────▼─────────┐
-           │                   │   │                   │
-           │  LLM Validator    │   │ Message Reaction  │
-           │                   │   │                   │
-           └───────────────────┘   └───────────────────┘
+```mermaid
+flowchart TD
+    DiscordBot["Discord Bot"] --> WordValidator["Word Validator"]
+    WordValidator --> GameState["Game State"]
+    WordValidator --> LLMValidator["LLM Validator"]
+    WordValidator --> MessageReaction["Message Reaction"]
 ```
 
 - **Discord Bot**: Interfaces with Discord, receives messages, and initializes the actor system
