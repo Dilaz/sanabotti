@@ -1,0 +1,31 @@
+[package]
+name = "sanabotti"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Discord
+serenity = { version = "0.12.4", features = ["client", "gateway", "rustls_backend", "model"] }
+poise = "0.6.1"
+
+# Actor Model
+actix = "0.13.5"
+
+# Configuration
+dotenvy = "0.15.7"
+
+# Error Handling
+thiserror = "2.0.12"
+miette = { version = "7.5.0", features = ["fancy"] }
+
+# Utilities
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+rig-core = "0.11.0"
+actix-rt = "2.10.0"
+tokio = { version = "1.44.1", features = ["rt-multi-thread"] }
+
+[dev-dependencies]
+tempfile = "3.19.1" 

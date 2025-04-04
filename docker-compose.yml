@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  sanabotti:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./data:/app/data:ro
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=sanabotti=debug,tower_http=debug 
