@@ -1,4 +1,4 @@
-# Numerobotti - Finnish Word Game Discord Bot
+# Sanabotti - Finnish Word Game Discord Bot
 
 This Discord bot monitors a specific channel for a Finnish word game where players create new Finnish words by changing, removing, or adding one letter to previous words. The bot validates words against a Finnish dictionary and uses LLM for proper noun validation.
 

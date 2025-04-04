@@ -2,39 +2,39 @@ use miette::{Diagnostic, SourceSpan};
 use std::io;
 use thiserror::Error;
 
-/// Primary error type for the Numerobotti application
+/// Primary error type for the Sanabotti application
 #[derive(Error, Debug, Diagnostic)]
 pub enum BotError {
     #[error("Discord API error: {0}")]
-    #[diagnostic(code(numerobotti::discord_error))]
+    #[diagnostic(code(sanabotti::discord_error))]
     Discord(#[from] serenity::Error),
 
     #[error("Environment configuration error: {0}")]
-    #[diagnostic(code(numerobotti::config_error))]
+    #[diagnostic(code(sanabotti::config_error))]
     Config(String),
 
     #[error("Dictionary error: {0}")]
-    #[diagnostic(code(numerobotti::dictionary_error))]
+    #[diagnostic(code(sanabotti::dictionary_error))]
     Dictionary(#[from] DictionaryError),
 
     #[error("Validation error: {0}")]
-    #[diagnostic(code(numerobotti::validation_error))]
+    #[diagnostic(code(sanabotti::validation_error))]
     Validation(#[from] ValidationError),
 
     #[error("Actor system error: {0}")]
-    #[diagnostic(code(numerobotti::actor_error))]
+    #[diagnostic(code(sanabotti::actor_error))]
     Actor(String),
 
     #[error("I/O error: {0}")]
-    #[diagnostic(code(numerobotti::io_error))]
+    #[diagnostic(code(sanabotti::io_error))]
     Io(#[from] io::Error),
 
     #[error("LLM error: {0}")]
-    #[diagnostic(code(numerobotti::llm_error))]
+    #[diagnostic(code(sanabotti::llm_error))]
     LLM(#[from] LLMError),
 
     #[error("Message reaction error: {0}")]
-    #[diagnostic(code(numerobotti::reaction_error))]
+    #[diagnostic(code(sanabotti::reaction_error))]
     Reaction(String),
 }
 
@@ -42,15 +42,15 @@ pub enum BotError {
 #[derive(Error, Debug, Diagnostic)]
 pub enum DictionaryError {
     #[error("Failed to load dictionary file: {0}")]
-    #[diagnostic(code(numerobotti::dictionary::load_error))]
+    #[diagnostic(code(sanabotti::dictionary::load_error))]
     LoadError(#[from] io::Error),
 
     #[error("Dictionary file format error: {0}")]
-    #[diagnostic(code(numerobotti::dictionary::format_error))]
+    #[diagnostic(code(sanabotti::dictionary::format_error))]
     FormatError(String),
 
     #[error("Dictionary is empty")]
-    #[diagnostic(code(numerobotti::dictionary::empty))]
+    #[diagnostic(code(sanabotti::dictionary::empty))]
     EmptyDictionary,
 }
 
@@ -58,11 +58,11 @@ pub enum DictionaryError {
 #[derive(Error, Debug, Diagnostic)]
 pub enum ValidationError {
     #[error("Word not found in dictionary: {0}")]
-    #[diagnostic(code(numerobotti::validation::not_found))]
+    #[diagnostic(code(sanabotti::validation::not_found))]
     NotInDictionary(String),
 
     #[error("Word does not follow game rules: {reason}")]
-    #[diagnostic(code(numerobotti::validation::rule_violation))]
+    #[diagnostic(code(sanabotti::validation::rule_violation))]
     RuleViolation {
         #[source_code]
         word: String,
@@ -74,7 +74,7 @@ pub enum ValidationError {
     },
 
     #[error("Word has been used before")]
-    #[diagnostic(code(numerobotti::validation::already_used))]
+    #[diagnostic(code(sanabotti::validation::already_used))]
     AlreadyUsed(String),
 }
 
@@ -82,19 +82,19 @@ pub enum ValidationError {
 #[derive(Error, Debug, Diagnostic)]
 pub enum LLMError {
     #[error("API error: {0}")]
-    #[diagnostic(code(numerobotti::llm::api_error))]
+    #[diagnostic(code(sanabotti::llm::api_error))]
     ApiError(String),
 
     #[error("Response parsing error: {0}")]
-    #[diagnostic(code(numerobotti::llm::parse_error))]
+    #[diagnostic(code(sanabotti::llm::parse_error))]
     ParseError(String),
 
     #[error("Rate limit exceeded")]
-    #[diagnostic(code(numerobotti::llm::rate_limit))]
+    #[diagnostic(code(sanabotti::llm::rate_limit))]
     RateLimit,
 
     #[error("Timeout waiting for LLM response")]
-    #[diagnostic(code(numerobotti::llm::timeout))]
+    #[diagnostic(code(sanabotti::llm::timeout))]
     Timeout,
 }
 
