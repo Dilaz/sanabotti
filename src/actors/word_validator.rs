@@ -1,6 +1,6 @@
 use actix::{Actor, Addr, Context, Handler, Message};
 use std::thread;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 use crate::actors::game_state::{GameStateActor, ValidateGameRules};
 use crate::actors::llm_validator::LLMValidatorActor;
@@ -61,20 +61,20 @@ impl Handler<ValidateWord> for WordValidatorActor {
 
         let word = msg.word.trim().to_lowercase();
 
-        info!(
+        debug!(
             "Validating word: '{}' (message_id: {})",
             word, msg.message_id
         );
 
         // Skip empty words
         if word.is_empty() {
-            info!("Skipping empty word");
+            debug!("Skipping empty word");
             return;
         }
 
         // Skip words with numbers and non-alphabetic characters
         if !word.chars().all(|c| c.is_alphabetic()) || word.chars().any(|c| c.is_ascii_digit()) {
-            info!("Skipping word with numbers or non-alphabetic characters");
+            debug!("Skipping word with numbers or non-alphabetic characters");
             return;
         }
 
@@ -84,7 +84,7 @@ impl Handler<ValidateWord> for WordValidatorActor {
         let message_id = msg.message_id;
 
         // Registers the word in game state
-        info!("Registering word '{}' in game state", word);
+        debug!("Registering word '{}' in game state", word);
         self.game_state
             .do_send(crate::actors::game_state::RegisterWord {
                 word: word.clone(),
@@ -94,7 +94,7 @@ impl Handler<ValidateWord> for WordValidatorActor {
 
         // Check if the word is in dictionary
         let is_in_dictionary = self.dictionary_validator.is_valid_word(&word);
-        info!("Word '{}' in dictionary: {}", word, is_in_dictionary);
+        debug!("Word '{}' in dictionary: {}", word, is_in_dictionary);
 
         // Store word for later use
         let word_clone = word.clone();
@@ -110,7 +110,7 @@ impl Handler<ValidateWord> for WordValidatorActor {
             // Use a timeout to ensure the thread doesn't hang forever
             rt.block_on(async {
                 // Always check game rules first
-                info!("Checking if '{}' follows game rules", word_clone);
+                debug!("Checking if '{}' follows game rules", word_clone);
                 match tokio::time::timeout(
                     std::time::Duration::from_secs(5),
                     game_state.send(ValidateGameRules { word: word_clone.clone() })
@@ -122,13 +122,14 @@ impl Handler<ValidateWord> for WordValidatorActor {
                                     // Word follows game rules
                                     if is_in_dictionary {
                                         // Valid word and valid move, add checkmark
-                                        info!("Adding ✅ reaction to message {}", message_id);
+                                        debug!("Adding ✅ reaction to message {}", message_id);
                                         message_reaction.do_send(crate::actors::message_reaction::AddReaction {
                                             message_id,
                                             reaction: '✅',
                                         });
 
                                         // Mark as valid in game state
+                                        debug!("Marking word as valid in game state");
                                         game_state.do_send(crate::actors::game_state::MarkWordValidity {
                                             message_id,
                                             is_valid: true,
@@ -137,7 +138,7 @@ impl Handler<ValidateWord> for WordValidatorActor {
                                         info!("Word '{}' is valid (in dictionary and follows rules)", word_clone);
                                     } else {
                                         // Word not in dictionary but follows rules, send to LLM validator
-                                        info!("Adding ❓ reaction to message {}", message_id);
+                                        debug!("Adding ❓ reaction to message {}", message_id);
                                         message_reaction.do_send(crate::actors::message_reaction::AddReaction {
                                             message_id,
                                             reaction: '❓',
@@ -149,7 +150,7 @@ impl Handler<ValidateWord> for WordValidatorActor {
                                             .map(|(i, c)| if i == 0 { c.to_uppercase().to_string() } else { c.to_string() })
                                             .collect::<String>();
 
-                                        info!("Sending '{}' to LLM validator", capitalized_word);
+                                        debug!("Sending '{}' to LLM validator", capitalized_word);
                                         llm_validator.do_send(crate::actors::llm_validator::ValidateProperNoun {
                                             word: capitalized_word,
                                             message_id,
@@ -161,7 +162,7 @@ impl Handler<ValidateWord> for WordValidatorActor {
                                     }
                                 } else {
                                     // Word doesn't follow game rules, add X (regardless of dictionary status)
-                                    info!("Adding ❌ reaction to message {}", message_id);
+                                    debug!("Adding ❌ reaction to message {}", message_id);
                                     message_reaction.do_send(crate::actors::message_reaction::AddReaction {
                                         message_id,
                                         reaction: '❌',
@@ -184,6 +185,6 @@ impl Handler<ValidateWord> for WordValidatorActor {
 
         // Don't block the actor system by waiting for the thread
         std::mem::drop(handle);
-        info!("Game rules validation thread for '{}' started", word);
+        debug!("Game rules validation thread for '{}' started", word);
     }
 }

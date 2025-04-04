@@ -100,4 +100,6 @@ See `.env.example` for all configuration options.
 
 ## License
 
-MIT 
+MIT
+
+For more information on the MIT License, visit [choosealicense.com/licenses/mit/](https://choosealicense.com/licenses/mit/).

@@ -4,7 +4,7 @@ use poise::serenity_prelude as serenity;
 use std::sync::Arc;
 use std::thread;
 use tokio::sync::oneshot;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::{
     actors::{
@@ -83,7 +83,7 @@ pub async fn setup_bot(
                 if let serenity::FullEvent::Message { new_message } = event {
                     // Process only messages from the target channel
                     if new_message.channel_id == data.channel_id {
-                        info!(
+                        debug!(
                             "Received message in target channel: {}",
                             new_message.content
                         );
@@ -102,7 +102,7 @@ pub async fn setup_bot(
                         }
 
                         // Send the word for validation
-                        info!(
+                        debug!(
                             "Attempting to send word '{}' to word validator actor",
                             content
                         );
@@ -112,7 +112,7 @@ pub async fn setup_bot(
                             user_id: new_message.author.id.get(),
                         });
 
-                        info!("Sent word '{}' for validation", content);
+                        info!("Processing word: '{}'", content);
                     }
                 }
                 Ok(())
@@ -147,7 +147,7 @@ pub async fn setup_bot(
                     Some(serenity::ActivityData::playing(&activity)),
                     serenity::OnlineStatus::Online,
                 );
-                info!("Setting activity to {}", activity);
+                debug!("Setting activity to {}", activity);
 
                 // Create a properly type-erased, 'static Context
                 let ctx = Arc::new(ctx.clone());

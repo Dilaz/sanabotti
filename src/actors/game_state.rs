@@ -1,6 +1,6 @@
 use actix::{Actor, Context, Handler, Message};
 use std::collections::VecDeque;
-use tracing::info;
+use tracing::{debug, info};
 
 use crate::validation::rules::RulesValidator;
 
@@ -107,7 +107,7 @@ impl Handler<RegisterWord> for GameStateActor {
             is_valid: false,
         };
 
-        info!(
+        debug!(
             "Registering word '{}' (message ID: {})",
             msg.word, msg.message_id
         );
@@ -124,7 +124,7 @@ impl Handler<ValidateGameRules> for GameStateActor {
     type Result = bool;
 
     fn handle(&mut self, msg: ValidateGameRules, _ctx: &mut Context<Self>) -> Self::Result {
-        info!("Validating game rules for word: '{}'", msg.word);
+        debug!("Validating game rules for word: '{}'", msg.word);
 
         // Use last_game_rule_word if available, otherwise fall back to last_valid_word
         let reference_word = self
@@ -133,12 +133,12 @@ impl Handler<ValidateGameRules> for GameStateActor {
             .or(self.last_valid_word.as_ref());
 
         if let Some(last_word) = reference_word {
-            info!("Comparing with last rule-valid word: '{}'", last_word);
+            debug!("Comparing with last rule-valid word: '{}'", last_word);
             let is_valid = self.rules_validator.is_valid_move(last_word, &msg.word);
 
             // If valid, update the last_game_rule_word and add to rules validator
             if is_valid {
-                info!(
+                debug!(
                     "Word '{}' follows game rules, updating last_game_rule_word",
                     msg.word
                 );
@@ -174,7 +174,7 @@ impl Handler<MarkWordValidity> for GameStateActor {
     type Result = ();
 
     fn handle(&mut self, msg: MarkWordValidity, _ctx: &mut Context<Self>) -> Self::Result {
-        info!(
+        debug!(
             "Marking message {} as {}",
             msg.message_id,
             if msg.is_valid { "valid" } else { "invalid" }
@@ -189,7 +189,7 @@ impl Handler<MarkWordValidity> for GameStateActor {
 
                 // If valid, update the last valid word
                 if msg.is_valid {
-                    info!(
+                    debug!(
                         "Updating last valid word from {} to: {}",
                         self.last_valid_word.as_deref().unwrap_or("<none>"),
                         entry.word
@@ -202,10 +202,7 @@ impl Handler<MarkWordValidity> for GameStateActor {
         }
 
         if !updated {
-            info!(
-                "Could not find message {} in word history to mark validity",
-                msg.message_id
-            );
+            debug!("Could not find message {} to mark validity", msg.message_id);
         }
     }
 }

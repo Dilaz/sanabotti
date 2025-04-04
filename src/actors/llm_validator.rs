@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::actors::game_state::{GameStateActor, MarkWordValidity};
 use crate::actors::message_reaction::{
@@ -128,7 +128,7 @@ impl Handler<TriggerBatchValidation> for LLMValidatorActor {
             return;
         }
 
-        info!("Triggering batch validation for {} words", self.queue.len());
+        debug!("Triggering batch validation for {} words", self.queue.len());
 
         // Clone items for validation
         let mut entries = Vec::new();
@@ -165,7 +165,7 @@ impl Handler<TriggerBatchValidation> for LLMValidatorActor {
                 .unwrap();
 
             rt.block_on(async {
-                info!("Validating batch of {} words", words_json.len());
+                info!("Validating batch of {} words with LLM", words.len());
                 // Get lock and perform batch validation with JSON string
                 let mut guard = validator.lock().await;
                 let validation_result = guard.validate_json_batch(&words_json).await;
@@ -188,6 +188,7 @@ impl Handler<TriggerBatchValidation> for LLMValidatorActor {
                         let is_valid = response.is_proper_noun;
 
                         // Delete question mark reaction if present
+                        debug!("Deleting question mark reaction for word '{}'", word);
                         entry.message_reaction.do_send(DeleteReaction {
                             message_id: entry.message_id,
                             reaction: EMOJI_QUESTION,
@@ -195,6 +196,10 @@ impl Handler<TriggerBatchValidation> for LLMValidatorActor {
 
                         if is_valid {
                             // Mark as valid in game state
+                            debug!(
+                                "LLM validated '{}' as a proper noun, marking as valid",
+                                word
+                            );
                             entry.game_state.do_send(MarkWordValidity {
                                 message_id: entry.message_id,
                                 is_valid: true,
@@ -208,9 +213,13 @@ impl Handler<TriggerBatchValidation> for LLMValidatorActor {
                                 },
                             );
 
-                            info!("Proper noun '{}' is valid", word);
+                            info!("'{}' validated as proper noun by LLM", word);
                         } else {
-                            // Not a valid proper noun, add X
+                            // Add X reaction
+                            debug!(
+                                "LLM rejected '{}' as a proper noun, marking as invalid",
+                                word
+                            );
                             entry.message_reaction.do_send(
                                 crate::actors::message_reaction::AddReaction {
                                     message_id: entry.message_id,
@@ -218,19 +227,11 @@ impl Handler<TriggerBatchValidation> for LLMValidatorActor {
                                 },
                             );
 
-                            info!("Word '{}' is not a valid Finnish word or proper noun", word);
+                            info!("'{}' rejected as proper noun by LLM", word);
                         }
                     } else {
-                        // Word not found in validation results, mark as invalid
-                        error!("Word '{}' not found in validation results", word);
-
-                        // Delete question mark reaction if present
-                        entry.message_reaction.do_send(DeleteReaction {
-                            message_id: entry.message_id,
-                            reaction: EMOJI_QUESTION,
-                        });
-
-                        // Add X reaction
+                        error!("Word '{}' not found in batch results", word);
+                        // Add X reaction as fallback
                         entry.message_reaction.do_send(
                             crate::actors::message_reaction::AddReaction {
                                 message_id: entry.message_id,
@@ -242,7 +243,7 @@ impl Handler<TriggerBatchValidation> for LLMValidatorActor {
             });
         });
 
-        // Don't wait for the thread to complete
+        // Don't wait for the thread
         std::mem::drop(handle);
     }
 }

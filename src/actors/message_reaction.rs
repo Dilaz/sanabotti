@@ -2,7 +2,7 @@ use actix::{Actor, Context, Handler, Message};
 use poise::serenity_prelude as serenity;
 use std::sync::Arc;
 use std::thread;
-use tracing::{error, info, warn};
+use tracing::{debug, error, warn};
 
 /// Emoji constants for reactions
 pub const EMOJI_CHECK: char = '✅';
@@ -60,7 +60,7 @@ impl Handler<AddReaction> for MessageReactionActor {
         let message_id = serenity::MessageId::new(msg.message_id);
         let reaction = msg.reaction; // Using char directly
 
-        info!(
+        debug!(
             "Attempting to add reaction '{}' to message {}",
             reaction, message_id
         );
@@ -73,20 +73,20 @@ impl Handler<AddReaction> for MessageReactionActor {
                 .unwrap();
 
             rt.block_on(async {
-                info!("Starting to process reaction '{}' for message {}", reaction, message_id);
+                debug!("Starting to process reaction '{}' for message {}", reaction, message_id);
 
                 // Simplified permissions check
                 let bot_id = discord_ctx.cache.current_user().id;
-                info!("Bot ID for permissions check: {:?}", bot_id);
+                debug!("Bot ID for permissions check: {:?}", bot_id);
 
                 match channel_id.message(&discord_ctx, message_id).await {
                     Ok(message) => {
-                        info!("Successfully fetched message {}, adding reaction '{}'", message_id, reaction);
+                        debug!("Successfully fetched message {}, adding reaction '{}'", message_id, reaction);
 
                         // Try to add the reaction
                         match message.react(&discord_ctx, reaction).await {
                             Ok(_) => {
-                                info!("Successfully added reaction '{}' to message {}", reaction, message_id);
+                                debug!("Successfully added reaction '{}' to message {}", reaction, message_id);
                             },
                             Err(e) => {
                                 error!("Failed to add reaction '{}' to message {}: {}", reaction, message_id, e);
@@ -140,7 +140,7 @@ impl Handler<DeleteReaction> for MessageReactionActor {
                                 reaction, message_id, e
                             );
                         } else {
-                            info!(
+                            debug!(
                                 "Deleted reaction '{}' from message {}",
                                 reaction, message_id
                             );
@@ -179,7 +179,7 @@ impl Handler<ClearReactions> for MessageReactionActor {
                         if let Err(e) = message.delete_reactions(&discord_ctx).await {
                             error!("Failed to clear reactions from message: {}", e);
                         } else {
-                            info!("Cleared all reactions from message {}", message_id);
+                            debug!("Cleared all reactions from message {}", message_id);
                         }
                     }
                     Err(e) => {
